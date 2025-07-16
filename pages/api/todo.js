@@ -16,6 +16,6 @@ async function insertData(req, res) {
 }
 
 async function fetchData(req, res) {
-    const {data} = await supabase.from('todo').select()
+    const {data} = await supabase.from('todo').select().order('isCompleted', {ascending: true}).order('createdAt', {ascending: false})
     return res.status(200).json(data);
 }
