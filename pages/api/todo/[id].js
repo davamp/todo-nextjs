@@ -8,11 +8,23 @@ export default async function handler(req, res) {
 async function updateData(req, res) {
     const {todo, isCompleted} = JSON.parse(req.body);
     const id = req.query.id;
-    if (!todo) return res.status(400).json({message: "bad request !!"})
+    // if (!todo && todo == null) return res.status(400).json({message: "bad request !!"})
     const {data: existed} = await supabase.from("todo").select().eq("todo", todo)
     if (existed.length > 0) return res.status(409).json({message: "todo is already existed !!"})
+    let update = {};
+    if (todo) {
+        update = {
+            todo: todo
+        }
+    }
+    if (isCompleted != null) {
+        update = {
+            ...update,
+            isCompleted: true
+        }
+    }
     await supabase.from('todo')
-        .update({todo: todo, isCompleted: isCompleted}).eq("id", id);
+        .update(update).eq("id", id);
     return res.status(200).json({});
 }
 
