@@ -13,6 +13,8 @@ export default function Home() {
 
     const [data, setData] = useState<Todo[] | []>([]);
     const [loading, setLoading] = useState(true);
+    const [showDialog, setShowDialog] = useState(false);
+    const [dialogResult, setDialogResult] = useState('');
 
     const fetchData = async () => {
         try {
@@ -31,7 +33,30 @@ export default function Home() {
     useEffect(() => {
         fetchData();
     }, []);
-
+    const insertNewData = async (val: string) => {
+        if (!val) return;
+        try {
+            const options = {
+                method: 'POST',
+                body: JSON.stringify({
+                    todo: val,
+                    isCompleted: false
+                })
+            };
+            const response = await fetch(`/api/todo`, options); // Replace with your API endpoint
+            if (response.ok) {
+                console.log(response);
+                setShowDialog(false);
+                await fetchData();
+            } else if (response.status == 409) {
+                alert("Todo is already existed !!")
+            } else {
+                alert("fail to insert !!")
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
     const setTodoCompleted = async (id: string) => {
         try {
             const options = {
@@ -86,26 +111,106 @@ export default function Home() {
                     ))}
                 </div>
 
+                <button
+                    onClick={() => setShowDialog(true)}
+                    className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-75"
+                    style={{fontFamily: 'Inter, sans-serif'}}
+                >
+                    Create
+                </button>
+                {showDialog && (
+                    <InputDialog
+                        onSubmit={(value) => insertNewData(value)}
+                        onCancel={() => setShowDialog(false)}
+                        onClose={() => setShowDialog(false)}
+                        title="Input your todo"
+                        placeholder="Todo"
+                    />
+                )}
             </div>
+
         );
     }
     return (<div className="font-sans bg-gray-100 min-h-screen p-8 rounded-lg">
         {loading ? (<div>Loading...</div>) : (<div>Loading...</div>)}
     </div>)
-    // return (
-    //     <div className="relative min-h-screen bg-gray-100 flex items-center justify-center font-sans">
-    //         {/* Main content area - for demonstration purposes */}
-    //         <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-    //             {data}
-    //         </div>
-    //
-    //         <button
-    //             onClick={handleClick}
-    //             className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-75"
-    //             style={{fontFamily: 'Inter, sans-serif'}}
-    //         >
-    //             Create
-    //         </button>
-    //     </div>
-    // );
+
 }
+
+// InputDialog component definition
+const InputDialog = ({onClose, onSubmit, onCancel, title, placeholder}) => {
+    const [inputValue, setInputValue] = useState('');
+
+    // Handle input change
+    const handleChange = (e) => {
+        setInputValue(e.target.value);
+    };
+
+    // Handle form submission
+    const handleSubmitClick = () => {
+        onSubmit(inputValue);
+    };
+
+    // Handle cancel click
+    const handleCancelClick = () => {
+        onCancel();
+    };
+
+    return (
+        // Overlay backdrop for the dialog
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+            {/* Dialog container */}
+            <div
+                className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform transition-all duration-300 scale-100 opacity-100">
+                {/* Dialog Header */}
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+                    {/* Close button */}
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-700 transition-colors duration-200 focus:outline-none"
+                        aria-label="Close dialog"
+                    >
+                        <svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            ></path>
+                        </svg>
+                    </button>
+                </div>
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 text-lg"
+                    />
+                </div>
+                <div className="flex justify-end space-x-3">
+                    <button
+                        onClick={handleCancelClick}
+                        className="px-5 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmitClick}
+                        className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+                    >
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
