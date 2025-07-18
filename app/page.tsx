@@ -1,6 +1,8 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import {FaCheck, FaEdit} from "react-icons/fa";
+import {FaTrashCan} from "react-icons/fa6";
 
 interface Todo {
     id: string;
@@ -101,12 +103,27 @@ export default function Home() {
                                 }}
                                    className="text-gray-600 rounded-lg">{item.todo}</p>
                             </div>
-                            {item.isCompleted ? ("") : (
+                            <div className="text-right">
                                 <button
                                     onClick={() => setTodoCompleted(item.id)}
-                                    className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 self-end">
-                                    Mark as Complete
-                                </button>)}
+                                    className="mr-2 mt-4 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors duration-200 self-end">
+
+                                    <FaEdit/>
+                                </button>
+                                <button
+                                    onClick={() => setTodoCompleted(item.id)}
+                                    className="mr-2 mt-4 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-800 transition-colors duration-200 self-end">
+
+                                    <FaTrashCan/>
+                                </button>
+                                {item.isCompleted ? ("") : (
+                                    <button
+                                        onClick={() => setTodoCompleted(item.id)}
+                                        className="mr-2 mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 self-end">
+
+                                        <FaCheck/>
+                                    </button>)}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -120,7 +137,7 @@ export default function Home() {
                 </button>
                 {showDialog && (
                     <InputDialog
-                        onSubmit={(value) => insertNewData(value)}
+                        onSubmit={(value: string) => insertNewData(value)}
                         onCancel={() => setShowDialog(false)}
                         onClose={() => setShowDialog(false)}
                         title="Input your todo"
