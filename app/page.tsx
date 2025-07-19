@@ -37,6 +37,8 @@ export default function Home() {
         await insertNewData(val)
     }
     const editData = async (val: string) => {
+        if (!val) return;
+        if (val == editValue.todo) return;
         setShowDialog(false);
         await updateDataRequest(editValue.id, val);
         await fetchData();
