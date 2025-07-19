@@ -12,29 +12,35 @@ interface Todo {
 }
 
 export default function Home() {
-
     const [data, setData] = useState<Todo[] | []>([]);
     const [loading, setLoading] = useState(true);
     const [showDialog, setShowDialog] = useState(false);
-    const [dialogResult, setDialogResult] = useState('');
+    const [editValue, setEditValue] = useState<Todo>(null);
 
     const fetchData = async () => {
-        try {
-            const response = await fetch('/api/todo'); // Replace with your API endpoint
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const result: Todo[] = await response.json();
-            setData(result)
-        } catch (err) {
-            // setError(err);
-        } finally {
-            setLoading(false);
+        const response = await fetch('/api/todo');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const result: Todo[] = await response.json();
+        setData(result)
+        setLoading(false);
     };
     useEffect(() => {
         fetchData();
     }, []);
+    const dialogSubmit = async (val: string) => {
+        if (editValue) {
+            await editData(val);
+            return;
+        }
+        await insertNewData(val)
+    }
+    const editData = async (val: string) => {
+        setShowDialog(false);
+        await updateDataRequest(editValue.id, val);
+        await fetchData();
+    }
     const insertNewData = async (val: string) => {
         if (!val) return;
         try {
@@ -45,7 +51,7 @@ export default function Home() {
                     isCompleted: false
                 })
             };
-            const response = await fetch(`/api/todo`, options); // Replace with your API endpoint
+            const response = await fetch(`/api/todo`, options);
             if (response.ok) {
                 console.log(response);
                 setShowDialog(false);
@@ -59,16 +65,15 @@ export default function Home() {
             console.error(e);
         }
     };
-    const setTodoCompleted = async (id: string) => {
+    const removeItem = async (id: string) => {
         try {
+
+            if (!confirm("Are you sure you want to delete this item ?")) return;
+
             const options = {
-                method: 'PATCH',
-                body: JSON.stringify({
-                    todo: null,
-                    isCompleted: true
-                })
+                method: 'DELETE'
             };
-            const response = await fetch(`/api/todo/${id}`, options); // Replace with your API endpoint
+            const response = await fetch(`/api/todo/${id}`, options);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -77,7 +82,40 @@ export default function Home() {
         } catch (e) {
             console.error(e);
         }
+    }
+    const editTodo = async (id: string) => {
+        const res = data.filter((item: Todo) => (item.id === id));
+        if (res.length == 0) return;
+        setEditValue(res[0]);
+        setShowDialog(true);
+    }
+    const setTodoCompleted = async (id: string) => {
+        await updateDataRequest(id, null, true);
+        await fetchData();
     };
+    const updateDataRequest = async (id: string, todo?: string, isCompleted?: boolean) => {
+        let body = {};
+        if (todo) {
+            body = {
+                todo: todo
+            }
+        }
+        if (isCompleted != null) {
+            body = {
+                ...body,
+                isCompleted: true
+            }
+        }
+        const options = {
+            method: 'PATCH',
+            body: JSON.stringify(body)
+        };
+        const response = await fetch(`/api/todo/${id}`, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log(response);
+    }
 
 
     if (data.length > 0) {
@@ -96,7 +134,6 @@ export default function Home() {
                             className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between rounded-lg"
                         >
                             <div>
-                                {/*<h2 className="text-right text-2xl font-semibold text-blue-600 mb-2 rounded-lg">{item.isCompleted ? "Completed" : "OnGoing"}</h2>*/}
                                 <p style={{
                                     lineBreak: 'anywhere',
                                     textDecoration: item.isCompleted ? 'line-through' : 'none'
@@ -105,13 +142,13 @@ export default function Home() {
                             </div>
                             <div className="text-right">
                                 <button
-                                    onClick={() => setTodoCompleted(item.id)}
+                                    onClick={() => editTodo(item.id)}
                                     className="mr-2 mt-4 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors duration-200 self-end">
 
                                     <FaEdit/>
                                 </button>
                                 <button
-                                    onClick={() => setTodoCompleted(item.id)}
+                                    onClick={() => removeItem(item.id)}
                                     className="mr-2 mt-4 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-800 transition-colors duration-200 self-end">
 
                                     <FaTrashCan/>
@@ -137,7 +174,8 @@ export default function Home() {
                 </button>
                 {showDialog && (
                     <InputDialog
-                        onSubmit={(value: string) => insertNewData(value)}
+                        value={editValue.todo}
+                        onSubmit={(value: string) => dialogSubmit(value)}
                         onCancel={() => setShowDialog(false)}
                         onClose={() => setShowDialog(false)}
                         title="Input your todo"
@@ -154,25 +192,17 @@ export default function Home() {
 
 }
 
-// InputDialog component definition
-const InputDialog = ({onClose, onSubmit, onCancel, title, placeholder}) => {
-    const [inputValue, setInputValue] = useState('');
-
-    // Handle input change
+const InputDialog = ({value = "", onClose, onSubmit, onCancel, title, placeholder}) => {
+    const [inputValue, setInputValue] = useState(value);
     const handleChange = (e) => {
         setInputValue(e.target.value);
     };
-
-    // Handle form submission
     const handleSubmitClick = () => {
         onSubmit(inputValue);
     };
-
-    // Handle cancel click
     const handleCancelClick = () => {
         onCancel();
     };
-
     return (
         // Overlay backdrop for the dialog
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
