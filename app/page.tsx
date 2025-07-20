@@ -35,6 +35,11 @@ export default function Home() {
     useEffect(() => {
         fetchData();
     }, []);
+    const dialogCancel = () => {
+        console.log("Cancel");
+        setShowDialog(false);
+        setEditValue(null);
+    }
     const dialogSubmit = async (val: string) => {
         if (editValue) {
             await editData(val);
@@ -122,7 +127,7 @@ export default function Home() {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        console.log(response);
+        setEditValue(null);
     }
 
     return (
@@ -200,8 +205,8 @@ export default function Home() {
                 <InputDialog
                     value={editValue == null ? "" : editValue.todo}
                     onSubmit={(value: string) => dialogSubmit(value)}
-                    onCancel={() => setShowDialog(false)}
-                    onClose={() => setShowDialog(false)}
+                    onCancel={dialogCancel}
+                    onClose={dialogCancel}
                     title="Input your todo"
                     placeholder="Todo"
                 />
