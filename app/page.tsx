@@ -139,9 +139,6 @@ export default function Home() {
                 />
             </div>
             <br/>
-            {/*{loading && (*/}
-            {/*    <div className=" mt-5 text-center text-gray-500 mb-10 rounded-lg">Loading...*/}
-            {/*    </div>)}*/}
             {
                 loading ?
                     (<div className=" mt-5 text-center text-gray-500 mb-10 rounded-lg">Loading...</div>) :
